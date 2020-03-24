@@ -2,6 +2,7 @@ from .auxiliary import *
 import numpy as np
 import atomium
 import os.path
+import erpscpy.er
 
 ################
 # fasta parser #
@@ -49,15 +50,25 @@ def toggle_code(sequence, direction='1to3'):
 ############################
 
 def structure(file):
-    ''' atomium structure class with the coordinates of the chains (only one chain in SCOPe, COPS and CATH files) '''
-    structure = atomium.open(str(file))
-    coords = []
+    ''' atomium structure class with the coordinates of the chains (only one chain in SCOPe, COPS and CATH files)
+    and it's EigenRank Profile '''
+    try:
+        structure = atomium.open(str(file))
+    except FileNotFoundError:
+        structure = atomium.fetch(str(file))
+    if structure.code == None:
+        structure.id = os.path.basename(file).split('.')[0]
+    else:
+        structure.id = structure.code
+    coord_dict = {}
     for chain in structure.model.chains():
+        coords = []
         for res in chain:
             for atom in res.atoms():
                 if (atom.name == 'CA' and atom.het.code != 'X'):
                     coords.append(atom.location)
-    structure.coordinates = np.asarray(coords)
-    return structure
+        coord_dict[chain.internal_id] = np.asarray(coords)
+    structure.coordinates = coord_dict
+    return erpscpy.er.add_eigenrank(structure)
 
 

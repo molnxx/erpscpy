@@ -27,6 +27,12 @@ def dm_normd(a,b):
             result[:,j] = np.abs(sc.ndtr(a)-sc.ndtr(b[j]))
     return result
 
+def rmsd(a,b):
+    ''' a and b are vectors '''
+    diff = np.array(a) - np.array(b)
+    n = len(a)
+    return np.sqrt((diff * diff).sum() / n)
+    # return np.sqrt(((a-b)**2).sum() / n)
 
 def chunks(s, n):
     ''' yield successive n-sized chunks from s '''
@@ -43,3 +49,9 @@ def progress_bar(title, value, end, bar_width=50):
     sys.stdout.flush()
     if percent==1.0:
         print()
+
+
+
+def first_key(dic):
+    ''' returns first key of a dictionary '''
+    return next(iter(dic.keys()))

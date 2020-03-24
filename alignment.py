@@ -61,28 +61,29 @@ class Alignment:
     def __init__(self, query, target, gap=1, factor=1, limit=0.7):
         self.query = query
         self.target = target
-        self.query_id = self.query.code
-        self.target_id = self.target.code
+        self.query_id = self.query.id
+        self.target_id = self.target.id
         self.limit = limit
         self.factor = factor
         self.gap = gap
-        self.Kabsch()
+        self.align_and_rotate()
 
-    def localalign(self,a,b):
-        ab = dm_euclidian(a,b) # normal distribution (dmnd) or plain difference (dmabs)
-        self.i_list, self.j_list, self.is_gap, self.score = nlocalalign(ab,a,b,self.gap,self.factor,self.limit)
+    def align_and_rotate(self): # get the local alignment, calculate optimal rotation matrix for structures to fit into each other
+        # choosing the first chain's ER profile and coordinates
+        q_chain = first_key(self.query.er)
+        q_er = self.query.er[q_chain]
+        a = self.query.coordinates[q_chain]
+        t_chain = first_key(self.target.er)
+        t_er = self.target.er[t_chain]
+        b = self.target.coordinates[t_chain]
+
+        ab = dm_euclidian(q_er, t_er) # normal distribution (dmnd) or difference (dmabs)
+
+        # actual alignment, numba speedup available:
+        self.i_list, self.j_list, self.is_gap, self.score = nlocalalign(ab,q_er,t_er,self.gap,self.factor,self.limit)
+
         self.traceback_len = len(self.is_gap)
 
-    def Kabsch(self): # get the local alignment, calculate optimal rotation matrix for structures to fit into each other
-        self.localalign(self.query.er,self.target.er)
-
-        def rmsd_(a,b): # a and b are vectors
-            diff = np.array(a) - np.array(b)
-            n = len(a)
-            return np.sqrt((diff * diff).sum() / n)
-            # return np.sqrt(((a-b)**2).sum() / n)
-        a = self.query.coordinates
-        b = self.target.coordinates
         i_list = [i for i,g in zip(self.i_list,self.is_gap) if g == 0]
         j_list = [j for j,g in zip(self.j_list,self.is_gap) if g == 0]
         self.len_wo_gaps = len(i_list)
@@ -101,7 +102,16 @@ class Alignment:
             d = np.linalg.det(v.T@u.T)
             r = v.T@np.diag([1,1,d])@u.T
             a = a@r
-            self.rmsd = rmsd_(a,b)
+            self.rmsd = rmsd(a,b)
             self.rotation_matrix = r
             self.query_aligned = a
             self.target_aligned = b
+
+        # GDT_TS:
+        dists = np.linalg.norm(a-b, axis=1)
+        f1 = np.count_nonzero(np.where(dists < 1))
+        f2 = np.count_nonzero(np.where(dists < 2))
+        f4 = np.count_nonzero(np.where(dists < 4))
+        f8 = np.count_nonzero(np.where(dists < 8))
+        self.gdt_ts = 25 * sum([f1,f2,f4,f8])/self.len_wo_gaps if self.len_wo_gaps > 0 else 0
+

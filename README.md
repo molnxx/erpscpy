@@ -1,5 +1,5 @@
 EigenRank Protein Structure Comparison (with PYthon)
-====================================================
+================================================================
 
 ## Installation
 
@@ -30,11 +30,11 @@ Added to the _atomium_ File object are the coordinates of each chain and the Eig
 
 ### Alignment of EigenRank-Profiles
 
-If the input is the dictionary with all chains described above, only the profile of the first chain will be aligned. Gap cost and an added limit for the local alignment dynamic algorithm can be set (default: gap = 1 and limit = 0.7). 
+The input needs to be the _structure_ object from above. When multiple chains are present, only the profile of the first chain will be aligned. Gap cost and an added limit for the local alignment dynamic algorithm can be set (default: gap = 1 and limit = 0.7). More flexibility will come in later releases; traces of an improved scoring of (normally distributed) ER profiles can be found in the code already.
 
     align = er.Alignment(domain1, domain2, gap = 1, limit = 0.7)
 
-The _Alignment_ object has many attributes for analysis. Among them are the residue indices and the score of the local alignment (*i_list*, *j_list*, *score*), rotation matrix (Kabsch), RMSD and the coordinates of both aligned structures (*query_aligned*, *target_aligned*).
+The _Alignment_ object has many attributes for analysis. Among them are the residue indices and the score of the local alignment (*i_list*, *j_list*, *score*), rotation matrix ([Kabsch](https://en.wikipedia.org/wiki/Kabsch_algorithm)), [RMSD](https://en.wikipedia.org/wiki/Root-mean-square_deviation), [GDT_TS](https://en.wikipedia.org/wiki/Global_distance_test) and the coordinates of both aligned structures (*query_aligned*, *target_aligned*).
 
 ## Cite
 

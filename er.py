@@ -53,5 +53,8 @@ def eigenrank(atom_coordinates, numba=1):
     return pca_correcting(leaderranks)
 
 def add_eigenrank(structure, numba=1):
-    structure.er = eigenrank(structure.coordinates)
+    er_dict = {}
+    for chain_id, coords in structure.coordinates.items():
+        er_dict[chain_id] = eigenrank(coords)
+    structure.er = er_dict
     return structure
